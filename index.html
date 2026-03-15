@@ -249,30 +249,30 @@
         }
         .rp-stamp {
             position: absolute;
-            top: 30px;
-            right: 30px;
-            font-size: 1.8rem;
+            top: 50%;
+            left: 50%;
+            font-size: 3rem;
             font-weight: 900;
             text-transform: uppercase;
-            border: 5px solid;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            transform: rotate(-15deg);
+            border: 6px solid;
+            padding: 1rem 2rem;
+            border-radius: 12px;
             display: inline-block;
             opacity: 0;
-            animation: stampIn 0.4s ease-out forwards;
+            animation: stampIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
             font-family: 'Courier New', monospace;
-            letter-spacing: 3px;
-            mix-blend-mode: multiply;
+            letter-spacing: 5px;
             pointer-events: none;
+            z-index: 1; /* На задний план под текст */
         }
+        @media (min-width: 640px) { .rp-stamp { font-size: 5rem; border-width: 8px; } }
         .dark .rp-stamp { mix-blend-mode: normal; }
-        .rp-stamp.approved { color: #16a34a; border-color: #16a34a; transform: rotate(-8deg) scale(1.1); opacity: 0.9; }
-        .rp-stamp.revealed { color: #f59e0b; border-color: #f59e0b; transform: rotate(-5deg) scale(1.1); opacity: 0.9; }
+        .rp-stamp.approved { color: #16a34a; border-color: #16a34a; }
+        .rp-stamp.revealed { color: #f59e0b; border-color: #f59e0b; }
         
         @keyframes stampIn {
-            0% { opacity: 0; transform: rotate(-15deg) scale(2); }
-            100% { opacity: 0.9; transform: rotate(-8deg) scale(1.1); }
+            0% { opacity: 0; transform: translate(-50%, -50%) rotate(-25deg) scale(2); }
+            100% { opacity: 0.15; transform: translate(-50%, -50%) rotate(-10deg) scale(1); }
         }
         .animate-shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
 
@@ -515,8 +515,8 @@
             <div id="board-overlay" class="absolute inset-0 bg-white/50 dark:bg-[#181a1b]/50 backdrop-blur-[1px] z-[35] hidden rounded-2xl transition-colors"></div>
 
             <div id="table-container" class="w-full lg:w-2/3 flex flex-col bg-white dark:bg-[#242729] rounded-xl shadow-md border border-gray-300 dark:border-[#2a2e30] overflow-hidden transition-colors duration-400 relative">
-                <div id="detective-stamp" class="hidden absolute top-4 right-4 border-4 border-red-600 text-red-600 font-black text-2xl uppercase tracking-widest px-2 py-1 transform rotate-12 opacity-80 pointer-events-none z-10 font-mono" style="border-radius: 4px;">СОВЕРШЕННО СЕКРЕТНО</div>
-                <div class="overflow-x-auto p-1">
+                <div id="detective-stamp" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 border-4 sm:border-8 border-red-600 text-red-600 font-black text-4xl sm:text-6xl uppercase tracking-widest px-4 py-2 transform -rotate-12 opacity-[0.07] dark:opacity-10 pointer-events-none z-0 font-mono text-center whitespace-nowrap" style="border-radius: 8px;">СОВЕРШЕННО<br>СЕКРЕТНО</div>
+                <div class="overflow-x-auto p-1 relative z-10">
                     <table class="w-full text-left border-collapse table-fixed">
                         <thead id="table-head" class="bg-gray-200 dark:bg-[#2a2e30] text-gray-800 dark:text-gray-100 transition-colors"></thead>
                         <tbody id="task-table-body"></tbody>
@@ -565,7 +565,7 @@
                 <div class="text-xs sm:text-sm font-bold text-rose-600 bg-rose-50 dark:bg-rose-900/30 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl border border-rose-200 dark:border-rose-800/50 shadow-sm whitespace-nowrap" id="rp-counter">0 / 0</div>
             </div>
             
-            <div class="paper-bg relative w-full max-w-4xl rounded-xl shadow-lg p-6 sm:p-10 min-h-[50vh] flex flex-col border border-amber-200 dark:border-[#3d362d]">
+            <div class="paper-bg relative w-full max-w-4xl rounded-xl shadow-lg p-6 sm:p-10 min-h-[50vh] flex flex-col border border-amber-200 dark:border-[#3d362d] overflow-hidden">
                 <div class="paper-edges rounded-xl"></div>
                 <div id="rp-content" class="relative z-10 flex-1 text-base sm:text-xl leading-relaxed sm:leading-[2.2] text-justify text-gray-900 dark:text-gray-100 font-serif"></div>
                 <div id="rp-stamp" class="rp-stamp hidden mt-8 self-center">ОДОБРЕНО</div>
@@ -1793,6 +1793,114 @@
         function closeModal() { if (window.state.isHomeworkMode) window.location.href = window.location.pathname; else location.reload(); }
         function shareTelegram() { const text = `🔥 Мой стрик в тренажере ЕГЭ по истории — ${window.state.stats.streak}! Попробуй побить: `; window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(text)}`); }
 
+        // ВОССТАНОВЛЕННЫЕ ФУНКЦИИ МОДАЛЬНЫХ ОКОН
+        window.openStatsModal = function() {
+            updateGlobalUI();
+            const eraContainer = document.getElementById('stats-era-container');
+            if (eraContainer) {
+                const eraNames = {'early': 'Древность и Смута', '18th': 'XVIII век', '19th': 'XIX век', '20th': 'XX век'};
+                let eraHtml = '';
+                for (let key in eraNames) {
+                    const st = window.state.stats.eraStats[key] || { correct: 0, total: 0 };
+                    const percent = st.total > 0 ? Math.round((st.correct / st.total) * 100) : 0;
+                    eraHtml += `
+                        <div class="flex justify-between items-center bg-gray-50 dark:bg-[#2a2e30]/50 p-2 rounded-lg border border-gray-100 dark:border-[#2a2e30]">
+                            <span class="text-xs font-bold text-gray-700 dark:text-gray-300">${eraNames[key]}</span>
+                            <span class="text-xs font-black ${percent > 80 ? 'text-emerald-500' : (percent > 50 ? 'text-yellow-500' : 'text-rose-500')}">${percent}% <span class="text-gray-400 font-normal">(${st.correct}/${st.total})</span></span>
+                        </div>`;
+                }
+                eraContainer.innerHTML = eraHtml;
+            }
+
+            const dailyContainer = document.getElementById('stats-daily-container');
+            if (dailyContainer) {
+                const daily = window.state.stats.dailyStats || {};
+                const dates = Object.keys(daily).sort((a,b) => new Date(b) - new Date(a)).slice(0, 5);
+                if (dates.length > 0) {
+                    let dailyHtml = '';
+                    dates.forEach(d => {
+                        const dStr = new Date(d).toLocaleDateString('ru-RU', {day:'2-digit', month:'2-digit'});
+                        const mins = Math.floor((daily[d].timeSpent || 0) / 60);
+                        dailyHtml += `
+                            <div class="flex justify-between items-center bg-gray-50 dark:bg-[#2a2e30]/50 p-2 rounded-lg border border-gray-100 dark:border-[#2a2e30]">
+                                <span class="text-xs font-bold text-gray-700 dark:text-gray-300">${dStr}</span>
+                                <div class="text-xs text-right">
+                                    <span class="font-black text-examBlue dark:text-blue-400">${daily[d].solved || 0} решено</span>
+                                    <span class="text-gray-400 mx-1">|</span>
+                                    <span class="font-bold text-yellow-600 dark:text-yellow-500">${mins} мин</span>
+                                </div>
+                            </div>`;
+                    });
+                    dailyContainer.innerHTML = dailyHtml;
+                } else {
+                    dailyContainer.innerHTML = '<p class="text-xs text-gray-500 text-center py-2">Пока нет данных.</p>';
+                }
+            }
+
+            const m = document.getElementById('stats-modal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            setTimeout(() => m.classList.remove('opacity-0'), 10);
+        };
+        
+        window.closeStatsModal = function() {
+            const m = document.getElementById('stats-modal');
+            m.classList.add('opacity-0');
+            setTimeout(() => m.classList.add('hidden'), 300);
+        };
+
+        window.openProfileModal = function() {
+            document.getElementById('profile-name-input').value = localStorage.getItem('student_manual_name') || '';
+            document.getElementById('profile-class-code').value = localStorage.getItem('student_class_code') || '';
+            const m = document.getElementById('profile-modal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            setTimeout(() => m.classList.remove('opacity-0'), 10);
+        };
+        
+        window.closeProfileModal = function() {
+            const m = document.getElementById('profile-modal');
+            m.classList.add('opacity-0');
+            setTimeout(() => m.classList.add('hidden'), 300);
+        };
+        
+        window.saveProfileName = function() {
+            const name = document.getElementById('profile-name-input').value.trim();
+            const code = document.getElementById('profile-class-code').value.trim();
+            if (name) localStorage.setItem('student_manual_name', name);
+            if (code !== undefined) localStorage.setItem('student_class_code', code);
+            showToast('✅', 'Профиль сохранен!', 'bg-emerald-500', 'border-emerald-700');
+            window.closeProfileModal();
+            if (window.syncProgressToCloud) window.syncProgressToCloud();
+        };
+
+        window.openAchievementsModal = function() {
+            const grid = document.getElementById('achievements-grid');
+            if (grid && typeof achievementsList !== 'undefined') {
+                let html = '';
+                achievementsList.forEach(a => {
+                    const isUnlocked = window.state.stats.achievements.includes(a.id);
+                    html += `
+                    <div class="achievement-card bg-white dark:bg-[#242729] border ${isUnlocked ? 'border-yellow-400 shadow-yellow-200/50' : 'border-gray-200 dark:border-[#2a2e30]'} rounded-xl p-3 flex flex-col items-center text-center relative ${isUnlocked ? '' : 'achievement-locked'}">
+                        <div class="text-3xl mb-2">${a.icon}</div>
+                        <h4 class="font-black text-[10px] sm:text-xs text-gray-800 dark:text-slate-200 mb-1 leading-tight">${a.name}</h4>
+                        <p class="text-[9px] text-gray-500 dark:text-gray-400 leading-tight">${a.desc}</p>
+                    </div>`;
+                });
+                grid.innerHTML = html;
+            }
+            const m = document.getElementById('achievements-modal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            setTimeout(() => m.classList.remove('opacity-0'), 10);
+        };
+        
+        window.closeAchievementsModal = function() {
+            const m = document.getElementById('achievements-modal');
+            m.classList.add('opacity-0');
+            setTimeout(() => m.classList.add('hidden'), 300);
+        };
+
         function openShopModal() {
             document.getElementById('shop-points-display').innerText = window.state.stats.points; let html = '';
             skinsList.forEach(s => {
@@ -1926,6 +2034,13 @@
         let rpFakesFound = 0;
         let rpCasesShuffled = [];
 
+        window.updateRPCounter = function() {
+            const counterEl = document.getElementById('rp-counter');
+            if (counterEl) {
+                counterEl.innerText = `${rpFakesFound} / ${rpFakesTotal}`;
+            }
+        };
+
         window.startRedPencilMode = function() {
             if (typeof redPencilCases === 'undefined') {
                 document.getElementById('rp-content').innerHTML = '<div class="text-center text-red-500 font-bold py-10">База данных Красного карандаша не найдена. Проверьте data.js</div>';
@@ -1969,6 +2084,9 @@
         };
 
         window.loadRPCase = function(index) {
+            // Сбрасываем флаг ошибок при загрузке нового документа
+            if(window.state) window.state.rpHasMistake = false; 
+            
             if (index >= rpCasesShuffled.length) {
                 index = 0;
                 currentRPCaseIndex = 0;
@@ -1980,15 +2098,32 @@
             const caseData = rpCasesShuffled[index];
             document.getElementById('rp-title').innerText = caseData.title + ' • ' + caseData.year + ' г.';
             
-            rpFakesTotal = caseData.slots.filter(s => s.current !== s.correct).length;
+            // НОВАЯ ЛОГИКА СЛУЧАЙНЫХ ОШИБОК
+            let potentialFakes = caseData.slots.filter(s => s.current !== s.correct);
+            let fixedTruths = caseData.slots.filter(s => s.current === s.correct);
+            
+            let targetFakesCount = Math.floor(Math.random() * 5) + 2; // от 2 до 6
+            targetFakesCount = Math.min(targetFakesCount, potentialFakes.length);
+            targetFakesCount = Math.max(1, targetFakesCount); // на случай если в базе меньше 2 ошибок
+            
+            let shuffledFakes = shuffleArray([...potentialFakes]);
+            let activeFakes = shuffledFakes.slice(0, targetFakesCount);
+            let convertedTruths = shuffledFakes.slice(targetFakesCount);
+            
+            let finalSlots = {};
+            activeFakes.forEach(s => finalSlots[s.id] = { ...s, isFake: true });
+            convertedTruths.forEach(s => finalSlots[s.id] = { ...s, isFake: false, current: s.correct });
+            fixedTruths.forEach(s => finalSlots[s.id] = { ...s, isFake: false, current: s.correct });
+
+            rpFakesTotal = activeFakes.length;
             rpFakesFound = 0;
             window.updateRPCounter();
 
             let htmlContent = caseData.text;
             caseData.slots.forEach(slot => {
-                const isFake = slot.current !== slot.correct;
-                const nodeStr = `<span class="word-node target-node" data-id="${slot.id}" data-type="${isFake ? 'fake' : 'truth'}" data-correct="${slot.correct}">${slot.current}</span>`;
-                htmlContent = htmlContent.replace(`{${slot.id}}`, nodeStr);
+                const finalSlot = finalSlots[slot.id];
+                const nodeStr = `<span class="word-node target-node" data-id="${finalSlot.id}" data-type="${finalSlot.isFake ? 'fake' : 'truth'}" data-correct="${finalSlot.correct}">${finalSlot.current}</span>`;
+                htmlContent = htmlContent.replace(`{${finalSlot.id}}`, nodeStr);
             });
 
             // "Минное поле": оборачиваем все остальные обычные слова в кликабельные элементы
@@ -2038,10 +2173,6 @@
             });
         };
 
-        window.updateRPCounter = function() {
-            document.getElementById('rp-counter').innerText = `Осталось фальшивок: ${rpFakesTotal - rpFakesFound}`;
-        };
-
         window.handleRPWordClick = function(e) {
             const node = e.currentTarget;
             if (!node || node.classList.contains('crossed')) return;
@@ -2056,15 +2187,6 @@
                 
                 rpFakesFound++;
                 window.updateRPCounter();
-                
-                if(window.state) {
-                    window.state.stats.totalSolvedEver = (window.state.stats.totalSolvedEver || 0) + 1;
-                    window.state.stats.points = (window.state.stats.points || 0) + 1;
-                    window.state.stats.streak = (window.state.stats.streak || 0) + 1;
-                    if (window.updateGlobalUI) window.updateGlobalUI();
-                    if (window.saveProgress) window.saveProgress();
-                    if (window.checkAchievements) window.checkAchievements();
-                }
                 
                 if (window.tgApp?.HapticFeedback) {
                     window.tgApp.HapticFeedback.notificationOccurred('success');
@@ -2088,6 +2210,7 @@
             
             if(window.state) {
                 window.state.stats.streak = 0; 
+                window.state.rpHasMistake = true; // Фиксируем ошибку, чтобы в конце не дать балл
                 if (window.updateGlobalUI) window.updateGlobalUI();
                 if (window.saveProgress) window.saveProgress();
             }
@@ -2110,6 +2233,18 @@
             
             document.getElementById('rp-next-btn').classList.remove('hidden');
             document.getElementById('rp-giveup-btn').classList.add('hidden');
+
+            // Начисляем 1 балл (строку) только если не было совершено ошибок
+            if(window.state && !window.state.rpHasMistake) {
+                if (typeof updateScoreAndStats === 'function') {
+                    updateScoreAndStats(1, true);
+                }
+                window.state.stats.streak = (window.state.stats.streak || 0) + 1;
+                
+                if (window.updateGlobalUI) window.updateGlobalUI();
+                if (window.saveProgress) window.saveProgress();
+                if (window.checkAchievements) window.checkAchievements();
+            }
             
             if (window.tgApp?.HapticFeedback) {
                 window.tgApp.HapticFeedback.notificationOccurred('success');
@@ -2143,11 +2278,6 @@
 
             document.getElementById('rp-next-btn').classList.remove('hidden');
             document.getElementById('rp-giveup-btn').classList.add('hidden');
-        };
-
-        window.nextRedPencilCase = function() {
-            currentRPCaseIndex++;
-            window.loadRPCase(currentRPCaseIndex);
         };
 
         window.loadProgressFromCloud = async function() {}; window.syncProgressToCloud = async function() {}; window.stopClassProgressSync = function() {};
