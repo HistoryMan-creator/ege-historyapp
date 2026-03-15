@@ -2484,4 +2484,4 @@ const redPencilCases = [
             { id: 5, current: "мирное сосуществование", correct: "политическое мышление" }
         ]
     }
-]
+];
